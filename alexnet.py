@@ -75,5 +75,7 @@ def alexnet(pretrained: bool = True, progress: bool = True, **kwargs: Any) -> Al
         state_dict = load_state_dict_from_url(model_urls['alexnet'],
                                               progress=progress)
         model.load_state_dict(state_dict, strict = False)
-        model.DAclassifier.state_dict =  copy.deepcopy(model.classifier.state_dict)
+        classifier_state_dict = model.classifier.state_dict()
+        model.DAclassifier.load_state_dict(classifier_state_dict, strict = False)
+        
     return model
