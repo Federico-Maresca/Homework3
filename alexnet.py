@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from .utils import load_state_dict_from_url
 from typing import Any
+import copy
 
 
 __all__ = ['AlexNet', 'alexnet']
@@ -13,7 +14,7 @@ model_urls = {
 
 # testmodified
 class AlexNet(nn.Module):
-    numDAclasses = 2
+    
     def __init__(self, num_classes: int = 1000) -> None:
         super(AlexNet, self).__init__()
         self.features = nn.Sequential(
@@ -39,7 +40,7 @@ class AlexNet(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes),
+            nn.Linear(4096, 1000),
         )
         self.DAclassifier = nn.Sequential(
             nn.Dropout(),
@@ -48,7 +49,7 @@ class AlexNet(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, numDAclasses),
+            nn.Linear(4096, 1000),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -56,6 +57,7 @@ class AlexNet(nn.Module):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
+        x = self.DAclassifier(x)
         return x
 
 
@@ -67,9 +69,11 @@ def alexnet(pretrained: bool = True, progress: bool = True, **kwargs: Any) -> Al
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
+    
     model = AlexNet(**kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls['alexnet'],
                                               progress=progress)
         model.load_state_dict(state_dict, strict = False)
+        model.DAclassifier.state_dict =  copy.deepcopy(model.classifier.state_dict)
     return model
