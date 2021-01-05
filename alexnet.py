@@ -11,7 +11,7 @@ model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
 }
 
-
+# testmodified
 class AlexNet(nn.Module):
 
     def __init__(self, num_classes: int = 1000) -> None:
