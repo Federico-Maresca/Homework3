@@ -52,13 +52,33 @@ class AlexNet(nn.Module):
             nn.Linear(4096, 1000),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, alpha = None) -> torch.Tensor:
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        x = self.DAclassifier(x)
-        return x
+        if alpha is not None:
+          reverse_feature = ReverseLayerF.apply( features, alpha)
+          discriminator_output = self.DAclassifier(reverse_feature)
+          return discriminator_output
+        else:
+          class_outputs = self.classifier(x)
+          return class_outputs
+
+
+class ReverseLayerF(Function):
+    # Forwards identity
+    # Sends backward reversed gradients
+    @staticmethod
+    def forward(ctx, x, alpha):
+        ctx.alpha = alpha
+
+        return x.view_as(x)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output = grad_output.neg() * ctx.alpha
+
+        return output, None
 
 
 def alexnet(pretrained: bool = True, progress: bool = True, **kwargs: Any) -> AlexNet:
